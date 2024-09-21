@@ -53,7 +53,7 @@ extern int org;
 #define EHELP	""
 #endif
 
-#define _VER	"1.7.8"
+#define _VER	"1.7.8-tsi-0.1"
 
 void title(void)
 {

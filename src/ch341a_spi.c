@@ -93,6 +93,7 @@ struct libusb_device_handle *handle = NULL;
 
 const struct dev_entry devs_ch341a_spi[] = {
 	{0x1A86, 0x5512, "WinChipHead (WCH)", "CH341A"},
+	{0x1A86, 0x5523, "WinChipHead (WCH)", "CH341B"},
 	{0},
 };
 
@@ -415,14 +416,20 @@ int ch341a_spi_init(void)
 #else
 	libusb_set_debug(NULL, 3); // Enable information, warning and error messages (only).
 #endif
-	uint16_t vid = devs_ch341a_spi[0].vendor_id;
-	uint16_t pid = devs_ch341a_spi[0].device_id;
-	handle = libusb_open_device_with_vid_pid(NULL, vid, pid);
+
+	/* Find the first CH341A/B device. */
+	for (int i = 0; devs_ch341a_spi[i].vendor_id != 0; i++) {
+		handle = libusb_open_device_with_vid_pid(NULL, devs_ch341a_spi[i].vendor_id, devs_ch341a_spi[i].device_id);
+		if (handle != NULL) {
+			printf("Found programmer device: %s - %s\n", devs_ch341a_spi[i].vendor_name, devs_ch341a_spi[i].device_name);
+			break;
+		}
+	}
+	
 	if (handle == NULL) {
-		printf("Couldn't open device %04x:%04x.\n", vid, pid);
+		printf("Couldn't found compatible device (CH341A/CH341B).\n");
 		return -1;
 	}
-	printf("Found programmer device: %s - %s\n", devs_ch341a_spi[0].vendor_name, devs_ch341a_spi[0].device_name);
 
 #ifdef __gnu_linux__
 	/* libusb_detach_kernel_driver() and friends basically only work on Linux. We simply try to detach on Linux
